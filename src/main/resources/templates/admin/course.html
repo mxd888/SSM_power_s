@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html  lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+  <!--    <script src="http://112.124.96.85/openFeign/static/layui/layui.js"></script>-->
+  <script src="https://www.layuicdn.com/layui/layui.js"></script>
+  <script src="http://112.124.96.85/openFeign/static/js/jquery.js"></script>
+  <!--    <link rel="stylesheet" href="http://112.124.96.85/openFeign/static/layui/css/layui.css">-->
+  <link rel="stylesheet" href="https://www.layuicdn.com/layui/css/layui.css">
+  <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+  <!--    <script src="http://112.124.96.85/openFeign/static/js/jquery.js"></script>-->
+</head>
+<body>
+ 
+<table class="layui-hide" id="test" lay-filter="test"></table>
+ 
+<script type="text/html" id="toolbarDemo">
+  <div class="layui-btn-container">
+    <button class="layui-btn layui-btn-sm" lay-event="getCheckData">获取选中行数据</button>
+    <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button>
+    <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button>
+    <button class="layui-btn layui-btn-sm layui-btn-warm" lay-event="insert"> 添  加 </button>
+  </div>
+</script>
+<script type="text/html" id="barDemo">
+  <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="edit" >编辑</a>
+  <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del" >删除</a>
+
+
+
+</script>
+ 
+	
+<script type="text/html" id="img">
+  <!-- 这里的 checked 的状态只是演示 -->
+  <!--// 这里必须是d.XXXX-->
+  <!-- <input type="checkbox" name="sex" value="{{d.id}}" lay-skin="switch" lay-text="女|男" lay-filter="sexDemo" {{ d.id == 10003 ? 'checked' : '' }}>-->
+</script>		  
+   
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+ 
+<script>
+layui.use('table', function(){
+  var table = layui.table;
+  
+  //温馨提示：默认由前端自动合计当前行数据。从 layui 2.5.6 开始： 若接口直接返回了合计行数据，则优先读取接口合计行数据。
+  //详见：https://www.layui.com/doc/modules/table.html#totalRow
+  table.render({
+    elem: '#test'
+    ,url:'/courselist'
+    //http://localhost:8080/list
+    ,toolbar: '#toolbarDemo'
+    ,title: '用户数据表'
+    ,totalRow: true
+     ,cols: [//这里要有回车否则idea无法解析下面也一样
+            [
+      {type: 'checkbox', fixed: 'left'}
+      ,{field:'cid', title:'ID', width:80, fixed: 'left', unresize: true, sort: true}
+      ,{field:'cname', title:'课程名称', width:120,}
+              ,{width:150, title: '操作' ,align:'center', toolbar: '#barDemo'}
+	  // 1.{field:'fileName', title:'商品图片', width:120 ,templet: function(res){
+      //   return '<img src="images/'+ res.fileName +'"/>'
+      // }},
+	  // 2.也可以使用事件绑定加载图片templet: '#switchTpl'
+
+    ]
+    ]
+    ,page: true
+  });
+  
+  //头工具栏事件
+    table.on('toolbar(test)', function(obj){
+      var checkStatus = table.checkStatus(obj.config.id);
+      switch(obj.event){
+        case 'getCheckData':
+          var data = checkStatus.data;
+          layer.alert(JSON.stringify(data));
+        break;
+        case 'getCheckLength':
+          var data = checkStatus.data;
+          layer.msg('选中了：'+ data.length + ' 个');
+        break;
+        case 'isAll':
+          layer.msg(checkStatus.isAll ? '全选': '未全选');
+        break;
+        
+        //自定义头工具栏右侧图标 - 提示
+        case 'LAYTABLE_TIPS':
+          layer.alert('这是工具栏右侧自定义的一个图标按钮');
+        break;
+        case 'insert':
+
+          layer.prompt({
+            formType: 0
+            ,value: '课程代号'
+          }, function(value, index,elem){
+            // console.log("value",value)
+            // console.log("elem",$("#userid").val())
+            let href = '/admin/insertCourseById?cId='+value+'&cName='+$("#userid").val();
+            downloadFileByForm(href)
+            layer.close(index);
+          });
+          $(".layui-layer-content").append("<br/><input type=\"text\" id= \"userid\" class=\"layui-input\" placeholder=\"课程名称\"/>")
+          break;
+          // layer.prompt({
+          //   formType: 0
+          //   ,value: '课程代号'
+          // }, function(value, index){
+          //   console.log("value",value)
+          //   let href = '/user/insertChooseClass?cid='+value;
+          //   downloadFileByForm(href)
+          //   layer.close(index);
+          // });
+
+      };
+    });
+    
+    //监听行工具事件
+    table.on('tool(test)', function(obj){
+      var data = obj.data;
+      //console.log(obj)
+      if(obj.event === 'del'){
+        layer.confirm('真的删除行么', function(index){
+          obj.del();
+          let href = '/admin/deleteCourseById?cid='+obj.data.cid;
+          downloadFileByForm(href)
+          layer.close(index);
+        });
+      } else if(obj.event === 'edit'){
+        layer.prompt({
+          formType: 0
+          ,value: '请输入课程名字'
+        }, function(value, index){
+          console.log("value",value)
+          let href = '/admin/modifyCourseById?cName='+value+'&cId='+obj.data.cid;
+          downloadFileByForm(href)
+          layer.close(index);
+        });
+      }
+    });
+  });
+function downloadFileByForm(href) {
+  var a = document.createElement('a');
+  a.setAttribute('href', href);
+  document.body.appendChild(a);
+  a.click();
+}
+  </script>
+  
+  </body>
+  </html>

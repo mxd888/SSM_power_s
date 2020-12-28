@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hdu.mxd.mapper.UserMapper">
+
+
+
+    <resultMap type="stuInCourseAll" id="MyGetAllStuInCourse">
+        <id property="username" column="username"/>
+        <result property="password" column="password"/>
+        <collection property="courses" ofType="course">
+            <id property="cId" column="c_id"/>
+            <result property="cName" column="c_name"/>
+        </collection>
+    </resultMap>
+
+    <select id="getAllStuInCourse" resultMap="MyGetAllStuInCourse">
+        SELECT username, password, c_name, c_id FROM `user` u, stu_course sc, course c
+WHERE u.Id = sc.user_id AND sc.course_id = c.c_id ;
+    </select>
+
+
+
+    <select id="getAllStuInCourseById" parameterType="Integer" resultMap="MyGetAllStuInCourse">
+        SELECT username, password, c_name, c_id FROM `user` u, stu_course sc, course c
+WHERE u.Id = sc.user_id AND sc.course_id = c.c_id and u.Id = #{id};
+    </select>
+
+
+
+    <resultMap id="MyGetUserM" type="user_m">
+        <result property="username" column="username" />
+        <result property="password" column="password" />
+        <association property="sclass" javaType="sclass">
+            <result property="sName" column="s_name" />
+        </association>
+    </resultMap>
+
+    <select id="getUserM" parameterType="Integer" resultMap="MyGetUserM">
+        SELECT username, password, s_name FROM `user` u, sclass s
+WHERE u.s_id = s.s_id AND u.Id = #{id};
+    </select>
+
+
+    <select id="getStuInCourse" parameterType="Integer" resultType="course">
+        SELECT c_id, c_name FROM `user` u, stu_course sc, course c
+    WHERE u.Id = sc.user_id AND sc.course_id = c.c_id AND u.Id = #{id};
+    </select>
+
+    <select id="getCourseInStu" parameterType="Integer" resultType="user">
+        SELECT username, `password` FROM `user` u, stu_course sc, course c
+WHERE u.Id = sc.user_id AND sc.course_id = c.c_id AND c.c_id =  #{id};
+    </select>
+
+</mapper>

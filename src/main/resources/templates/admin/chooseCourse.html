@@ -1,0 +1,152 @@
+
+
+
+<!DOCTYPE html>
+<html  lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>layuiAdmin 后台管理员</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <!--    <script src="http://112.124.96.85/openFeign/static/layui/layui.js"></script>-->
+    <script src="https://www.layuicdn.com/layui/layui.js"></script>
+    <script src="http://112.124.96.85/openFeign/static/js/jquery.js"></script>
+    <!--    <link rel="stylesheet" href="http://112.124.96.85/openFeign/static/layui/css/layui.css">-->
+    <link rel="stylesheet" href="https://www.layuicdn.com/layui/css/layui.css">
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <!--    <script src="http://112.124.96.85/openFeign/static/js/jquery.js"></script>-->
+</head>
+<body>
+
+
+<table class="layui-hide" id="test" lay-filter="test"></table>
+
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckData">获取选中行数据</button>
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button>
+        <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button>
+        <button class="layui-btn layui-btn-sm layui-btn-warm" lay-event="insert"> 添  加 </button>
+    </div>
+</script>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="edit" >编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del" >删除</a>
+
+
+
+</script>
+
+<script type="text/html" id="img">
+    <!-- 这里的 checked 的状态只是演示 -->
+
+    <!--// 这里必须是d.XXXX-->
+    <!-- <input type="checkbox" name="sex" value="{{d.id}}" lay-skin="switch" lay-text="女|男" lay-filter="sexDemo" {{ d.id == 10003 ? 'checked' : '' }}>-->
+</script>
+
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+
+<script>
+    layui.use(['jquery', 'layer', 'table'], function(){
+        var table = layui.table
+        ,$ = layui.$ //重点处
+        ,layer = layui.layer;
+
+        //温馨提示：默认由前端自动合计当前行数据。从 layui 2.5.6 开始： 若接口直接返回了合计行数据，则优先读取接口合计行数据。
+        //详见：https://www.layui.com/doc/modules/table.html#totalRow
+        table.render({
+            elem: '#test'
+            ,url:'/admin/selectCourseAll'
+            //http://localhost:8080/list
+            ,toolbar: '#toolbarDemo'
+            ,title: '用户数据表'
+            ,totalRow: true
+            ,cols: [//这里要有回车否则idea无法解析下面也一样
+                [
+                    {type: 'checkbox', fixed: 'left'}
+                    ,{field:'cid', title:'ID', width:120,}
+                    ,{field:'uid', title:'用户ID', width:120,}
+                    ,{field:'cname', title:'课程名', width:120,}
+                    ,{field:'username', title:'用户名', width:120,}
+
+                    ,{width:150, title: '操作' ,align:'center', toolbar: '#barDemo'}
+
+                ]
+            ]
+            ,page: true
+        });
+
+        //头工具栏事件
+        table.on('toolbar(test)', function(obj){
+            var checkStatus = table.checkStatus(obj.config.id);
+            switch(obj.event){
+                case 'getCheckData':
+                    var data = checkStatus.data;
+                    layer.alert(JSON.stringify(data));
+                    break;
+                case 'getCheckLength':
+                    var data = checkStatus.data;
+                    layer.msg('选中了：'+ data.length + ' 个');
+                    break;
+                case 'isAll':
+                    layer.msg(checkStatus.isAll ? '全选': '未全选');
+                    break;
+
+                //自定义头工具栏右侧图标 - 提示
+                case 'LAYTABLE_TIPS':
+                    layer.alert('这是工具栏右侧自定义的一个图标按钮');
+                    break;
+                case 'insert':
+
+                    layer.prompt({
+                        formType: 0
+                        ,value: '课程代号'
+                    }, function(value, index,elem){
+                            // console.log("value",value)
+                            // console.log("elem",$("#userid").val())
+                        let href = '/admin/insertChoose?cid='+value+'&uid='+$("#userid").val();
+                        downloadFileByForm(href)
+                        layer.close(index);
+                    });
+                    $(".layui-layer-content").append("<br/><input type=\"text\" id= \"userid\" class=\"layui-input\" placeholder=\"用户ID\"/>")
+                    break;
+            };
+        });
+
+        //监听行工具事件
+        table.on('tool(test)', function(obj){
+            var data = obj.data;
+            if(obj.event === 'del'){
+                layer.confirm('真的删除行么', function(index){
+                    obj.del();
+                    let href = '/admin/deleteCourseClass?cid='+obj.data.cid;
+                    downloadFileByForm(href)
+                    layer.close(index);
+                });
+            } else if(obj.event === 'edit'){
+                layer.prompt({
+                    formType: 0
+                    ,value: '请输入课程代号：英语(1001),历史(1002),语文(1003)'
+                }, function(value, index){
+                    console.log("value",value)
+                    let href = '/admin/modifyCourseClass?cid='+value+'&id='+obj.data.cid;
+                    downloadFileByForm(href)
+                    layer.close(index);
+                });
+            }
+        });
+    });
+
+    function downloadFileByForm(href) {
+        var a = document.createElement('a');
+        a.setAttribute('href', href);
+        document.body.appendChild(a);
+        a.click();
+    }
+</script>
+
+
+</body>
+</html>
+
